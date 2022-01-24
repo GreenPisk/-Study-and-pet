@@ -1,34 +1,35 @@
 #!/usr/bin/env python3
-
 import rospy
 from geometry_msgs.msg import Twist
-import math
+from turtlesim.msg import Pose
+from std_msgs.msg import Float64
+import math,time
 
-def paramet_angl(angl):
-    turn_angle = math.radians(angl)
-    return turn_angle
+class TurtleBot:
+    Speed_Turtle = 3
+    TURN_ANGLE = math.radians(90)
+
+    def __init__(self):
+        rospy.init_node('turtlebot_controller', anonymous=True)
+        self.velocity_publisher = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
+
+        self.command = Twist()
+        self.command.linear.x = self.Speed_Turtle
+        self.ang = Twist()
+        self.ang.angular.z = self.TURN_ANGLE
 
 
-def speed_paramet(vel, linvel=0, angvel=0):
-    vel.linear.x = linvel
-    vel.angular.z = angvel
-    return vel
-
-
-def move_tertle(line_vel,ang_vel):
-    rospy.init_node('turtmove', anonymous=True)
-    pub = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
-    rate = rospy.Rate(1)
-    vel = Twist()
-    ang_vel = paramet_angl(ang_vel)
-
-    while not rospy.is_shutdown():
-        pub.publish(speed_paramet(vel, linvel = line_vel))
-        rate.sleep()
-        pub.publish(speed_paramet(vel, angvel = ang_vel))
-        rate.sleep()
-
+    def loop(self):
+        self.rate = rospy.Rate(1)
+        while not rospy.is_shutdown():
+            self.velocity_publisher.publish(self.command)
+            self.rate.sleep()
+            self.velocity_publisher.publish(self.ang)
+            self.rate.sleep()
 
 if __name__ == '__main__':
-    move_tertle(2,90)
-
+    try:
+        x = TurtleBot()
+        x.loop()
+    except rospy.ROSInterruptException:
+        pass
