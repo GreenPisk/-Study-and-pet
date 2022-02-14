@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import struct
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from turtlesim.msg import Pose
+from std_msgs.msg import Float64
+import math,time
+
+class Serialize:
+    def __init__(self,codeset):
+        self.codeset = codeset
+    
+    
+    def get_serializer(self, data):
+        if isinstance(data,int):
+            return  bytes([data])
+        elif isinstance(data,float):
+            return  struct.pack('f', data)
+        elif isinstance(data,str):
+            return  data.encode(self.codeset)
+        else:
+            raise ValueError(type)
+
+            
+    def get_deserializer(self, data, info_type):
+        if info_type == 'int':
+            return  bytes.decode([data])
+        elif info_type == 'float':
+            return  struct.unpack('f', data)
+        elif info_type == 'str':
+            return  data.decode(self.codeset)
+        else:
+            raise ValueError(type)
+            
+class Teleop_serial():
+    def __init__(self):
+        rospy.init_node("talker", anonymous = True)
+        my_subscriber = rospy.Subscriber("/turtle1/cmd_vel", Twist, self.callback)
+        self.pub = rospy.Publisher('chatter', String, queue_size=10)
+        self.Serialize = Serialize('utf-8')
+        self.rate = rospy.Rate(10)
+        rospy.spin()
+
+
+    def callback(self,data):
+        self.Linear_x = self.Serialize.get_serializer(data.linear.x)
+        self.Angular_z = self.Serialize.get_serializer(data.angular.z)
+        self.String_value = self.Serialize.get_serializer(":")
+        self.Bit_string_value = (self.Linear_x + self.String_value + self.Angular_z)
+        rospy.loginfo(self.Bit_string_value)
+        self.pub.publish(self.Bit_string_value)
+        self.rate.sleep()
+
+
+if __name__=="__main__":
+    try:
+        x = Teleop_serial()
+        x.callback()
+    except rospy.ROSInterruptException:
+        pass
