@@ -1,5 +1,5 @@
 # Входные данные
-# не совсем понятно должна ли быть проверка входящих данных?
+
 
 def home_list(n,t,teleport):
     num = [int(i) for i in teleport if i.isdigit()]
